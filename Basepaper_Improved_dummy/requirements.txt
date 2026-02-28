@@ -1,0 +1,8 @@
+# requirements.txt
+
+flask
+librosa
+numpy
+torch
+soundfile
+scikit-learn

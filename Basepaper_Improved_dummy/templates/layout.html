@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en-US" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Emotion Tracker{% endblock %}</title>
+
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+  <style>
+    :root {
+      --bg-light: #fefefe;
+      --bg-dark: #0d0722;
+      --text-light: #2d3748;
+      --text-dark: #d4d4d8;
+      --menu-footer-bg-light: #f5f5f5;
+      --menu-footer-bg-dark: #0d0621;
+      --link-color: #1d4fa0;
+      --link-color-dark: #5d7dd6;
+      --accent: #3b82f6;
+      --accent-dark: #3463e3;
+      --shadow: 0 2px 12px rgba(26,145,197,0.5);
+      --footer-shadow: 0 -6px 12px rgba(26,145,197,0.5);
+      --transition: all 0.3s ease;
+    }
+
+    [data-theme="light"] {
+      background-color: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    [data-theme="dark"] {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+    }
+
+    nav, footer {
+      background-color: var(--menu-footer-bg-dark);
+      box-shadow: var(--shadow);
+    }
+
+    [data-theme="light"] nav,
+    [data-theme="light"] footer {
+      background-color: var(--menu-footer-bg-light);
+    }
+
+    nav {
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    nav li:first-child {
+      margin-right: auto;
+    }
+
+    nav a, nav button {
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-decoration: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--link-color-dark);
+    }
+
+    #content {
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem 1rem;
+      flex: 1;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      box-shadow: var(--footer-shadow);
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      padding: 2rem;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    input[type="file"] {
+      margin: 1rem 0;
+    }
+
+    button.submit {
+      padding: 0.8rem 1.5rem;
+      font-size: 1.1rem;
+      border-radius: 10px;
+      border: none;
+      background-color: var(--accent);
+      color: white;
+      cursor: pointer;
+    }
+
+    button.submit:hover {
+      background-color: var(--accent-dark);
+    }
+  </style>
+
+  {% block head %}{% endblock %}
+
+  <script>
+    (() => {
+      const saved = localStorage.getItem("theme") || "dark";
+      document.documentElement.setAttribute("data-theme", saved);
+    })();
+  </script>
+</head>
+
+<body>
+
+<nav>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/purpose">Purpose</a></li>
+    <li>
+      <button id="themeToggle">🌙</button>
+    </li>
+  </ul>
+</nav>
+
+<div id="content">
+  {% block content %}{% endblock %}
+</div>
+
+<footer>
+  <p>For queries: 227003003@sastra.ac.in</p>
+  <p>Abishek US - SASTRA Deemed University © 2026</p>
+</footer>
+
+<script>
+  const btn = document.getElementById("themeToggle");
+  const root = document.documentElement;
+
+  btn.onclick = () => {
+    const theme = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+    btn.textContent = theme === "dark" ? "🌙" : "☀️";
+  };
+</script>
+
+</body>
+</html>
