@@ -1,6 +1,7 @@
 # utils/load_dataset.py
 
-import os
+import sys,os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),"..")))
 from preprocessing.feature_extraction import extract_features
 from utils.config import TESS_PATH, EMOVO_PATH, EMOTIONS
 

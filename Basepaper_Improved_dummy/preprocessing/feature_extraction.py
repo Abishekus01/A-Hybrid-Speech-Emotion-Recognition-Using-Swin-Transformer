@@ -1,6 +1,9 @@
+import os
 import librosa
 import numpy as np
 import torch
+
+os.makedirs("datasets/processed", exist_ok=True)
 
 # =========================
 # LOG-MEL SPECTROGRAM

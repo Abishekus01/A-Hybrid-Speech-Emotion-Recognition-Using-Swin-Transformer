@@ -1,47 +1,663 @@
-{% extends "layout.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Speech Emotion Recognition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:        #0a0c12;
+      --surface:   #111520;
+      --card:      #161b2e;
+      --border:    #1e2540;
+      --accent:    #4f8ef7;
+      --accent2:   #7c3aed;
+      --success:   #10d9a0;
+      --warn:      #f97316;
+      --text:      #e8ecf5;
+      --muted:     #5a637a;
+      --glow:      rgba(79,142,247,0.18);
+    }
 
-{% block title %}Speech Emotion Recognition{% endblock %}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-{% block content %}
-<div class="card">
-  <h1>Speech Emotion Recognition</h1>
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-  <form method="POST" action="/predict" enctype="multipart/form-data">
-    <input type="file" name="audio" accept=".wav" required onchange="previewAudio(event)">
-    <br><br>
+    /* ── animated background grid ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79,142,247,0.12), transparent 70%);
+      pointer-events: none;
+    }
 
-    <!-- Audio Player -->
-    <audio id="audioPlayer" controls style="display:none; width:100%;"></audio>
-    <br>
+    /* ── NAV ── */
+    nav {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 3rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,12,18,0.85);
+      backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+    .theme-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 0.35rem 0.7rem; border-radius: 6px;
+      cursor: pointer; font-size: 1rem; transition: border-color 0.2s;
+    }
+    .theme-btn:hover { border-color: var(--accent); }
 
-    <button type="submit" class="submit">Analyze Emotion</button>
-  </form>
+    /* ── MAIN LAYOUT ── */
+    main {
+      position: relative; z-index: 5;
+      max-width: 780px; margin: 0 auto;
+      padding: 4rem 1.5rem 6rem;
+    }
 
-  {% if emotion %}
-    <hr>
-    <h2>Predicted Emotion:</h2>
+    /* ── HERO ── */
+    .hero { text-align: center; margin-bottom: 3.5rem; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: rgba(79,142,247,0.1); border: 1px solid rgba(79,142,247,0.25);
+      color: var(--accent); font-size: 0.72rem; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 0.35rem 0.9rem; border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+    .hero-badge::before { content: '●'; font-size: 0.5rem; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    <!-- Left aligned emotion output, line by line -->
-    <div style="font-size: 1.2rem; line-height: 1.8; text-align: left; display: inline-block;">
-      {% for emo, prob in emotion.items() %}
-        {{ emo | capitalize }}: {{ prob }}%<br>
-      {% endfor %}
-    </div>
-  {% endif %}
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--muted); font-size: 0.9rem; line-height: 1.7;
+      max-width: 460px; margin: 0 auto;
+    }
 
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .card-header .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+    }
+    .card-body { padding: 1.8rem 1.5rem; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex; gap: 0.5rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 4px;
+      margin-bottom: 2rem;
+    }
+    .tab-btn {
+      flex: 1; padding: 0.65rem 1rem;
+      border: none; border-radius: 7px;
+      background: transparent; color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem; letter-spacing: 0.06em;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--card); color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── FILE UPLOAD ── */
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 12px;
+      padding: 2.5rem 1.5rem; text-align: center;
+      cursor: pointer; transition: all 0.25s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(79,142,247,0.04);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .drop-icon {
+      font-size: 2.2rem; margin-bottom: 0.8rem; display: block;
+      filter: grayscale(0.4);
+    }
+    .drop-zone p { color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
+    .drop-zone strong { color: var(--text); }
+    #file-name {
+      margin-top: 0.8rem; font-size: 0.78rem;
+      color: var(--success); min-height: 1.2em;
+    }
+
+    /* ── RECORD ── */
+    .record-area { text-align: center; }
+    .record-ring {
+      position: relative; width: 100px; height: 100px;
+      margin: 0 auto 1.5rem;
+    }
+    .record-ring svg {
+      position: absolute; inset: 0;
+      transform: rotate(-90deg);
+    }
+    .record-ring svg circle {
+      fill: none; stroke: var(--border); stroke-width: 3;
+    }
+    .record-ring svg circle.progress {
+      stroke: var(--accent); stroke-dasharray: 283;
+      stroke-dashoffset: 283; stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear;
+    }
+    .record-ring.recording svg circle { stroke: #ef4444; }
+    .record-ring.recording svg circle.progress { stroke: #ef4444; }
+
+    .mic-btn {
+      position: absolute; inset: 8px;
+      border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-size: 1.8rem;
+      cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mic-btn:hover { background: var(--card); border-color: var(--accent); }
+    .mic-btn.recording {
+      background: rgba(239,68,68,0.15);
+      border-color: #ef4444;
+      animation: recordPulse 1.5s infinite;
+    }
+    @keyframes recordPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+      50%      { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+    }
+
+    .record-status {
+      font-size: 0.82rem; color: var(--muted);
+      margin-bottom: 1.2rem; min-height: 1.4em;
+      letter-spacing: 0.04em;
+    }
+    .record-status.active { color: #ef4444; }
+    .record-status.processing { color: var(--accent); }
+
+    .rec-controls {
+      display: flex; gap: 0.75rem; justify-content: center;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1.6rem; border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem; letter-spacing: 0.06em;
+      cursor: pointer; border: none; transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 0 20px rgba(79,142,247,0.25);
+    }
+    .btn-primary:hover { background: #3a7de8; box-shadow: 0 0 28px rgba(79,142,247,0.4); }
+    .btn-danger {
+      background: rgba(239,68,68,0.15); color: #ef4444;
+      border: 1px solid rgba(239,68,68,0.3);
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .btn-outline {
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--text); color: var(--text); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+    .btn-full { width: 100%; justify-content: center; margin-top: 1.2rem; }
+
+    /* ── RESULT ── */
+    #result-section {
+      display: none;
+      animation: fadeUp 0.5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .result-top {
+      display: flex; align-items: center; gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .emotion-emoji {
+      font-size: 3.5rem; line-height: 1;
+      filter: drop-shadow(0 0 12px rgba(255,255,255,0.2));
+    }
+    .emotion-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem; font-weight: 800;
+      text-transform: capitalize; letter-spacing: -0.02em;
+    }
+    .emotion-sub { color: var(--muted); font-size: 0.78rem; margin-top: 0.2rem; }
+
+    /* prob bars */
+    .prob-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .prob-row { display: flex; align-items: center; gap: 0.75rem; }
+    .prob-name {
+      width: 80px; font-size: 0.75rem; color: var(--muted);
+      text-transform: capitalize; flex-shrink: 0;
+    }
+    .prob-track {
+      flex: 1; height: 6px; background: var(--border); border-radius: 100px; overflow: hidden;
+    }
+    .prob-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+      width: 0%;
+    }
+    .prob-fill.top { background: linear-gradient(90deg, var(--success), var(--accent)); }
+    .prob-pct { width: 44px; text-align: right; font-size: 0.75rem; color: var(--muted); }
+
+    /* ── ALERTS ── */
+    .alert {
+      padding: 0.85rem 1.1rem; border-radius: 8px;
+      font-size: 0.82rem; display: flex; align-items: center; gap: 0.6rem;
+      margin-bottom: 1.2rem;
+    }
+    .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171; }
+    .alert-info  { background: rgba(79,142,247,0.1); border: 1px solid rgba(79,142,247,0.25); color: var(--accent); }
+
+    /* ── LOADER ── */
+    .loader {
+      display: none; flex-direction: column;
+      align-items: center; gap: 1rem;
+      padding: 2rem 0;
+    }
+    .loader.visible { display: flex; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader p { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.06em; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 5;
+      text-align: center; padding: 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 0.75rem; line-height: 1.8;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    /* ── TIMER ── */
+    #rec-timer {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem; font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text); margin-bottom: 0.5rem;
+      min-height: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="/"><span>SER</span> · SwinTSER</a>
+  <div class="nav-links">
+    <a href="/" class="active">Home</a>
+    <a href="/about">About</a>
+    <a href="/purpose">Purpose</a>
+    <button class="theme-btn" title="Toggle theme">🌙</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">Bilingual · English + Tamil</div>
+    <h1>Speech <em>Emotion</em><br>Recognition</h1>
+    <p>Upload an audio file or record your voice live. Our Swin Transformer model will detect the emotion in milliseconds.</p>
+  </div>
+
+  <!-- ALERTS -->
   {% if error %}
-    <p style="color: red; margin-top: 1rem;">{{ error }}</p>
+  <div class="alert alert-error">⚠ {{ error }}</div>
   {% endif %}
-</div>
+
+  <!-- MAIN CARD -->
+  <div class="card">
+    <div class="card-header">
+      <span class="dot"></span> Analyze Audio
+    </div>
+    <div class="card-body">
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('upload', this)">📁 Upload File</button>
+        <button class="tab-btn" onclick="switchTab('record', this)">🎙 Live Record</button>
+      </div>
+
+      <!-- TAB: FILE UPLOAD -->
+      <div class="tab-panel active" id="tab-upload">
+        <form id="upload-form" action="/predict" method="POST" enctype="multipart/form-data">
+          <div class="drop-zone" id="drop-zone">
+            <input type="file" name="audio" id="audio-input" accept=".wav,.mp3,.ogg,.mpeg"
+                   onchange="showFileName(this)"/>
+            <span class="drop-icon">🎵</span>
+            <p><strong>Click to choose file</strong> or drag & drop here</p>
+            <p>Supports WAV · MP3 · OGG</p>
+            <div id="file-name"></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="analyze-btn" disabled>
+            ▶ Analyze Emotion
+          </button>
+        </form>
+      </div>
+
+      <!-- TAB: LIVE RECORD -->
+      <div class="tab-panel" id="tab-record">
+        <div class="record-area">
+          <div class="record-ring" id="record-ring">
+            <svg viewBox="0 0 100 100" width="100" height="100">
+              <circle cx="50" cy="50" r="45"/>
+              <circle class="progress" id="ring-progress" cx="50" cy="50" r="45"/>
+            </svg>
+            <button class="mic-btn" id="mic-btn" onclick="toggleRecording()">🎙</button>
+          </div>
+          <div id="rec-timer"></div>
+          <div class="record-status" id="record-status">Click the mic to start recording</div>
+          <div class="rec-controls">
+            <button class="btn btn-outline" id="stop-btn" onclick="stopAndPredict()" disabled>
+              ⏹ Stop & Predict
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LOADER -->
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p>Analyzing audio — extracting features...</p>
+  </div>
+
+  <!-- RESULT CARD -->
+  <div class="card" id="result-section">
+    <div class="card-header">
+      <span class="dot" style="background:var(--success)"></span> Prediction Result
+    </div>
+    <div class="card-body">
+      <div class="result-top">
+        <div class="emotion-emoji" id="result-emoji">😐</div>
+        <div>
+          <div class="emotion-label" id="result-label">—</div>
+          <div class="emotion-sub" id="result-sub">Top predicted emotion</div>
+        </div>
+      </div>
+      <div class="prob-list" id="prob-list"></div>
+    </div>
+  </div>
+
+  <!-- Show result from file upload (Flask template injection) -->
+  {% if emotion %}
+  <script>
+    window.__FLASK_EMOTION__ = "{{ emotion }}";
+    window.__FLASK_PROBS__   = {{ emotion_probs | tojson }};
+  </script>
+  {% endif %}
+
+</main>
+
+<footer>
+  For queries: <a href="mailto:227003003@sastra.ac.in">227003003@sastra.ac.in</a><br>
+  Abishek US · SASTRA Deemed University © 2026
+</footer>
 
 <script>
-function previewAudio(event) {
-  const audioPlayer = document.getElementById('audioPlayer');
-  const file = event.target.files[0];
-  if (file) {
-    audioPlayer.src = URL.createObjectURL(file);
-    audioPlayer.style.display = "block";
+// ── EMOTION CONFIG ──
+const EMOJI_MAP = {
+  happy: '😄', sad: '😢', angry: '😠',
+  neutral: '😐', fear: '😨', disgust: '🤢', surprise: '😮'
+};
+
+// ── TAB SWITCH ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ── FILE UPLOAD ──
+function showFileName(input) {
+  const name = input.files[0]?.name || '';
+  document.getElementById('file-name').textContent = name ? '✓ ' + name : '';
+  document.getElementById('analyze-btn').disabled = !name;
+}
+
+// drag & drop
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('dragover');
+  const inp = document.getElementById('audio-input');
+  inp.files = e.dataTransfer.files;
+  showFileName(inp);
+});
+
+// show loader on upload form submit
+document.getElementById('upload-form').addEventListener('submit', () => {
+  document.getElementById('loader').classList.add('visible');
+});
+
+// ── RECORDER ──
+let mediaRecorder, audioChunks = [], timerInterval, elapsed = 0;
+const MAX_SECS = 30;
+
+async function toggleRecording() {
+  const micBtn = document.getElementById('mic-btn');
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopAndPredict();
+  } else {
+    await startRecording();
   }
 }
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+   const mimeType = MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
+  ? 'audio/ogg;codecs=opus'
+  : 'audio/webm';
+mediaRecorder = new MediaRecorder(stream, { mimeType });
+    audioChunks = [];
+    elapsed = 0;
+
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = sendAudio;
+    mediaRecorder.start();
+
+    // UI
+    document.getElementById('mic-btn').classList.add('recording');
+    document.getElementById('mic-btn').textContent = '⏹';
+    document.getElementById('record-ring').classList.add('recording');
+    document.getElementById('stop-btn').disabled = false;
+    setStatus('🔴 Recording... speak now', 'active');
+
+    // timer
+    timerInterval = setInterval(() => {
+      elapsed++;
+      document.getElementById('rec-timer').textContent = formatTime(elapsed);
+      // ring animation
+      const pct = elapsed / MAX_SECS;
+      const offset = 283 - (283 * pct);
+      document.getElementById('ring-progress').style.strokeDashoffset = offset;
+      if (elapsed >= MAX_SECS) stopAndPredict();
+    }, 1000);
+
+  } catch (err) {
+    setStatus('⚠ Microphone access denied', '');
+    alert('Please allow microphone access in your browser.');
+  }
+}
+
+function stopAndPredict() {
+  if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+  clearInterval(timerInterval);
+  mediaRecorder.stop();
+  mediaRecorder.stream.getTracks().forEach(t => t.stop());
+
+  // UI reset
+  document.getElementById('mic-btn').classList.remove('recording');
+  document.getElementById('mic-btn').textContent = '🎙';
+  document.getElementById('record-ring').classList.remove('recording');
+  document.getElementById('stop-btn').disabled = true;
+  setStatus('⏳ Processing...', 'processing');
+  document.getElementById('loader').classList.add('visible');
+}
+
+async function sendAudio() {
+  const blob = new Blob(audioChunks, { type: 'audio/webm' });
+  const formData = new FormData();
+  formData.append('audio', blob, 'recorded.webm');
+
+  try {
+    const res = await fetch('/predict-api', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    document.getElementById('loader').classList.remove('visible');
+
+    if (data.emotion) {
+      showResult(data.emotion, data.probabilities);
+      setStatus('✅ Done! See result below.', '');
+      document.getElementById('rec-timer').textContent = '';
+      document.getElementById('ring-progress').style.strokeDashoffset = 283;
+    } else {
+      setStatus('❌ ' + (data.error || 'Unknown error'), '');
+    }
+  } catch (err) {
+    document.getElementById('loader').classList.remove('visible');
+    setStatus('❌ Request failed. Check server.', '');
+  }
+}
+
+// ── DISPLAY RESULT ──
+function showResult(topEmotion, probs) {
+  const sec = document.getElementById('result-section');
+  sec.style.display = 'block';
+  // force reflow for animation
+  void sec.offsetWidth;
+  sec.style.animation = 'none';
+  void sec.offsetWidth;
+  sec.style.animation = '';
+
+  document.getElementById('result-emoji').textContent =
+    EMOJI_MAP[topEmotion.toLowerCase()] || '🎭';
+  document.getElementById('result-label').textContent = topEmotion;
+
+  // probability bars
+  const list = document.getElementById('prob-list');
+  list.innerHTML = '';
+  const entries = Object.entries(probs).sort((a,b) => b[1]-a[1]);
+  entries.forEach(([emo, pct], i) => {
+    const row = document.createElement('div');
+    row.className = 'prob-row';
+    row.innerHTML = `
+      <div class="prob-name">${emo}</div>
+      <div class="prob-track">
+        <div class="prob-fill ${i===0?'top':''}" style="width:0%" data-target="${pct}"></div>
+      </div>
+      <div class="prob-pct">${pct}%</div>`;
+    list.appendChild(row);
+  });
+
+  // animate bars
+  setTimeout(() => {
+    list.querySelectorAll('.prob-fill').forEach(el => {
+      el.style.width = el.dataset.target + '%';
+    });
+  }, 80);
+
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('record-status');
+  el.textContent = msg;
+  el.className = 'record-status' + (cls ? ' ' + cls : '');
+}
+
+function formatTime(s) {
+  const m = Math.floor(s/60).toString().padStart(2,'0');
+  const sec = (s%60).toString().padStart(2,'0');
+  return m + ':' + sec;
+}
+
+// ── SHOW FLASK RESULT (file upload) ──
+if (window.__FLASK_EMOTION__ && window.__FLASK_PROBS__) {
+  document.getElementById('loader').classList.remove('visible');
+  showResult(window.__FLASK_EMOTION__, window.__FLASK_PROBS__);
+}
 </script>
-{% endblock %}
+</body>
+</html>
