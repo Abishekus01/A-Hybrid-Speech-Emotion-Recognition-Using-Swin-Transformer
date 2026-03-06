@@ -1,175 +1,315 @@
 <!DOCTYPE html>
-<html lang="en-US" data-theme="dark">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Emotion Tracker{% endblock %}</title>
 
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    :root {
-      --bg-light: #fefefe;
-      --bg-dark: #0d0722;
-      --text-light: #2d3748;
-      --text-dark: #d4d4d8;
-      --menu-footer-bg-light: #f5f5f5;
-      --menu-footer-bg-dark: #0d0621;
-      --link-color: #1d4fa0;
-      --link-color-dark: #5d7dd6;
-      --accent: #3b82f6;
-      --accent-dark: #3463e3;
-      --shadow: 0 2px 12px rgba(26,145,197,0.5);
-      --footer-shadow: 0 -6px 12px rgba(26,145,197,0.5);
-      --transition: all 0.3s ease;
-    }
+<title>{% block title %}Speech Emotion Recognition{% endblock %}</title>
 
-    [data-theme="light"] {
-      background-color: var(--bg-light);
-      color: var(--text-light);
-    }
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 
-    [data-theme="dark"] {
-      background-color: var(--bg-dark);
-      color: var(--text-dark);
-    }
+<style>
 
-    body {
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: var(--transition);
-    }
+:root{
+--bg:#0a0c12;
+--surface:#111520;
+--card:#161b2e;
+--border:#1e2540;
+--accent:#4f8ef7;
+--accent2:#7c3aed;
+--success:#10d9a0;
+--warn:#f97316;
+--text:#e8ecf5;
+--muted:#5a637a;
+}
 
-    nav, footer {
-      background-color: var(--menu-footer-bg-dark);
-      box-shadow: var(--shadow);
-    }
+/* LIGHT THEME */
 
-    [data-theme="light"] nav,
-    [data-theme="light"] footer {
-      background-color: var(--menu-footer-bg-light);
-    }
+body.light{
+--bg:#f6f7fb;
+--surface:#ffffff;
+--card:#ffffff;
+--border:#e3e6f2;
+--text:#0f172a;
+--muted:#5a637a;
+}
 
-    nav {
-      padding: 1rem 1.5rem;
-      position: sticky;
-      top: 0;
-    }
+*,*::before,*::after{
+box-sizing:border-box;
+margin:0;
+padding:0;
+}
 
-    nav ul {
-      list-style: none;
-      display: flex;
-      gap: 1.5rem;
-      align-items: center;
-    }
+body{
+background:var(--bg);
+color:var(--text);
+font-family:'DM Mono',monospace;
+min-height:100vh;
+overflow-x:hidden;
+transition:background .3s,color .3s;
+}
 
-    nav li:first-child {
-      margin-right: auto;
-    }
+/* background grid */
 
-    nav a, nav button {
-      font-size: 1.2rem;
-      font-weight: 600;
-      text-decoration: none;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--link-color-dark);
-    }
+body::before{
+content:'';
+position:fixed;
+inset:0;
+z-index:0;
+background-image:
+linear-gradient(var(--border) 1px,transparent 1px),
+linear-gradient(90deg,var(--border) 1px,transparent 1px);
+background-size:48px 48px;
+opacity:.35;
+pointer-events:none;
+}
 
-    #content {
-      max-width: 900px;
-      margin: auto;
-      padding: 2rem 1rem;
-      flex: 1;
-    }
+body::after{
+content:'';
+position:fixed;
+inset:0;
+z-index:0;
+background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(79,142,247,0.12),transparent 70%);
+pointer-events:none;
+}
 
-    h1 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+/* NAV */
 
-    footer {
-      text-align: center;
-      padding: 1rem;
-      box-shadow: var(--footer-shadow);
-      font-size: 0.9rem;
-    }
+nav{
+position:relative;
+z-index:10;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:1.2rem 3rem;
+border-bottom:1px solid var(--border);
+background:rgba(10,12,18,.85);
+backdrop-filter:blur(12px);
+}
 
-    .card {
-      background: rgba(255,255,255,0.05);
-      padding: 2rem;
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      text-align: center;
-    }
+.nav-logo{
+font-family:'Syne',sans-serif;
+font-weight:800;
+font-size:1.1rem;
+letter-spacing:.05em;
+color:var(--text);
+text-decoration:none;
+}
 
-    input[type="file"] {
-      margin: 1rem 0;
-    }
+.nav-logo span{
+color:var(--accent);
+}
 
-    button.submit {
-      padding: 0.8rem 1.5rem;
-      font-size: 1.1rem;
-      border-radius: 10px;
-      border: none;
-      background-color: var(--accent);
-      color: white;
-      cursor: pointer;
-    }
+.nav-links{
+display:flex;
+gap:2rem;
+align-items:center;
+}
 
-    button.submit:hover {
-      background-color: var(--accent-dark);
-    }
-  </style>
+.nav-links a{
+color:var(--muted);
+text-decoration:none;
+font-size:.82rem;
+letter-spacing:.08em;
+text-transform:uppercase;
+transition:.2s;
+}
 
-  {% block head %}{% endblock %}
+.nav-links a:hover{
+color:var(--text);
+}
 
-  <script>
-    (() => {
-      const saved = localStorage.getItem("theme") || "dark";
-      document.documentElement.setAttribute("data-theme", saved);
-    })();
-  </script>
+/* TOGGLE BUTTON */
+
+.theme-btn{
+background:var(--surface);
+border:1px solid var(--border);
+color:var(--text);
+padding:.35rem .7rem;
+border-radius:6px;
+cursor:pointer;
+font-size:1rem;
+}
+
+.theme-btn:hover{
+border-color:var(--accent);
+}
+
+/* MAIN */
+
+main{
+position:relative;
+z-index:5;
+max-width:780px;
+margin:0 auto;
+padding:4rem 1.5rem 6rem;
+}
+
+/* CARD */
+
+.card{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:16px;
+overflow:hidden;
+margin-bottom:1.5rem;
+}
+
+.card-header{
+display:flex;
+align-items:center;
+gap:.6rem;
+padding:1rem 1.5rem;
+border-bottom:1px solid var(--border);
+font-size:.75rem;
+letter-spacing:.1em;
+text-transform:uppercase;
+color:var(--muted);
+}
+
+.card-header .dot{
+width:8px;
+height:8px;
+border-radius:50%;
+background:var(--accent);
+}
+
+.card-body{
+padding:1.8rem 1.5rem;
+}
+
+/* BUTTON */
+
+.btn{
+display:inline-flex;
+align-items:center;
+gap:.5rem;
+padding:.75rem 1.6rem;
+border-radius:8px;
+font-family:'DM Mono',monospace;
+font-size:.82rem;
+letter-spacing:.06em;
+cursor:pointer;
+border:none;
+transition:.2s;
+text-transform:uppercase;
+}
+
+.btn-primary{
+background:var(--accent);
+color:#fff;
+box-shadow:0 0 20px rgba(79,142,247,.25);
+}
+
+.btn-primary:hover{
+background:#3a7de8;
+box-shadow:0 0 28px rgba(79,142,247,.4);
+}
+
+/* FOOTER */
+
+footer{
+position:relative;
+z-index:5;
+text-align:center;
+padding:2rem;
+border-top:1px solid var(--border);
+color:var(--muted);
+font-size:.75rem;
+line-height:1.8;
+}
+
+footer a{
+color:var(--muted);
+text-decoration:none;
+}
+
+footer a:hover{
+color:var(--accent);
+}
+
+</style>
+
 </head>
 
 <body>
 
 <nav>
-  <ul>
-    <li><a href="/">Home</a></li>
-    <li><a href="/about">About</a></li>
-    <li><a href="/purpose">Purpose</a></li>
-    <li>
-      <button id="themeToggle">🌙</button>
-    </li>
-  </ul>
-</nav>
 
-<div id="content">
-  {% block content %}{% endblock %}
+<a href="/" class="nav-logo">
+<span>SER</span> · SwinTSER
+</a>
+
+<div class="nav-links">
+
+<a href="/">Home</a>
+<a href="/about">About</a>
+<a href="/purpose">Purpose</a>
+
+<button class="theme-btn" onclick="toggleTheme()" id="themeToggle">
+🌙
+</button>
+
 </div>
 
+</nav>
+
+<main>
+
+{% block content %}
+{% endblock %}
+
+</main>
+
 <footer>
-  <p>For queries: 227003003@sastra.ac.in</p>
-  <p>Abishek US - SASTRA Deemed University © 2026</p>
+
+For queries:
+<a href="mailto:227003003@sastra.ac.in">227003003@sastra.ac.in</a>
+
+<br>
+
+Abishek US · SASTRA Deemed University © 2026
+
 </footer>
 
 <script>
-  const btn = document.getElementById("themeToggle");
-  const root = document.documentElement;
 
-  btn.onclick = () => {
-    const theme = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    root.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-    btn.textContent = theme === "dark" ? "🌙" : "☀️";
-  };
+function toggleTheme(){
+
+const body=document.body
+const btn=document.getElementById("themeToggle")
+
+body.classList.toggle("light")
+
+if(body.classList.contains("light")){
+btn.innerHTML="☀️"
+localStorage.setItem("theme","light")
+}
+else{
+btn.innerHTML="🌙"
+localStorage.setItem("theme","dark")
+}
+
+}
+
+/* load saved theme */
+
+window.onload=function(){
+
+const saved=localStorage.getItem("theme")
+
+if(saved==="light"){
+document.body.classList.add("light")
+document.getElementById("themeToggle").innerHTML="☀️"
+}
+
+}
+
 </script>
+
+{% block scripts %}
+{% endblock %}
 
 </body>
 </html>

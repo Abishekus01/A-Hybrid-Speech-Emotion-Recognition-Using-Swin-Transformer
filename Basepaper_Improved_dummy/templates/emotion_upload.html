@@ -371,7 +371,7 @@
 
   <!-- HERO -->
   <div class="hero">
-    <div class="hero-badge">Bilingual · English + Tamil</div>
+    <div class="hero-badge">Bilingual · English + Italian</div>
     <h1>Speech <em>Emotion</em><br>Recognition</h1>
     <p>Upload an audio file or record your voice live. Our Swin Transformer model will detect the emotion in milliseconds.</p>
   </div>
@@ -658,6 +658,44 @@ if (window.__FLASK_EMOTION__ && window.__FLASK_PROBS__) {
   document.getElementById('loader').classList.remove('visible');
   showResult(window.__FLASK_EMOTION__, window.__FLASK_PROBS__);
 }
+
+// ── THEME TOGGLE ──
+const themeBtn = document.querySelector('.theme-btn');
+
+function setTheme(mode) {
+  if (mode === "light") {
+    document.documentElement.style.setProperty('--bg', '#f5f7fb');
+    document.documentElement.style.setProperty('--surface', '#ffffff');
+    document.documentElement.style.setProperty('--card', '#ffffff');
+    document.documentElement.style.setProperty('--border', '#e3e7f0');
+    document.documentElement.style.setProperty('--text', '#0f172a');
+    document.documentElement.style.setProperty('--muted', '#6b7280');
+    themeBtn.textContent = "☀️";
+  } else {
+    document.documentElement.style.setProperty('--bg', '#0a0c12');
+    document.documentElement.style.setProperty('--surface', '#111520');
+    document.documentElement.style.setProperty('--card', '#161b2e');
+    document.documentElement.style.setProperty('--border', '#1e2540');
+    document.documentElement.style.setProperty('--text', '#e8ecf5');
+    document.documentElement.style.setProperty('--muted', '#5a637a');
+    themeBtn.textContent = "🌙";
+  }
+
+  localStorage.setItem("theme", mode);
+}
+
+themeBtn.addEventListener("click", () => {
+  const current = localStorage.getItem("theme") || "dark";
+  const next = current === "dark" ? "light" : "dark";
+  setTheme(next);
+});
+
+// Load saved theme
+window.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("theme") || "dark";
+  setTheme(saved);
+});
+
 </script>
 </body>
 </html>

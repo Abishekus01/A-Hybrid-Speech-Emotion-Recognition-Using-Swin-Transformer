@@ -1,37 +1,89 @@
 {% extends "layout.html" %}
 
-{% block title %}About | Emotion AI{% endblock %}
+{% block title %}About | SER{% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: auto; padding: 2rem; text-align: center;">
-    <h1>SASTRA Emotion Tracker</h1>
-    <p style="font-size: 1.1rem; margin-top: 1rem;">
-        This project is a mini-project developed by <b>Abishek U S</b> (admin) and <b>Vishwanathan J R</b> (contributor) as part of
-        an academic requirement at <b>SASTRA Deemed University</b>.
+
+<div class="hero">
+  <h1 class="gradient-title"> <em>About Project</em></h1>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="dot"></span> Project Information
+  </div>
+
+  <div class="card-body about-content">
+
+    <h2 class="section-title">SASTRA Emotion Tracker</h2>
+
+    <p>
+      This project is a mini-project developed by 
+      <strong>Abishek U S (admin)</strong> and 
+      <strong>Vishwanathan J R (contributor)</strong> 
+      as part of an academic requirement at 
+      <strong>SASTRA Deemed University</strong>.
     </p>
 
-    <p style="margin-top: 1rem;">
-        The system uses <b>Speech Emotion Recognition</b> powered by
-        <b>Swin Transformer</b> models to identify emotions from audio signals.
+    <p>
+      The system uses <strong>Speech Emotion Recognition</strong> powered by 
+      <strong>Swin Transformer models</strong> to identify emotions from audio signals.
     </p>
 
-    <p style="margin-top: 1rem;">
-        Technologies used:
-    </p>
+    <h3 class="tech-title">Technologies Used</h3>
 
-    <ul style="
-        list-style: none;
-        padding: 0;
-        display: flex;
-        gap: 2rem;
-        justify-content: center;
-        align-items: center;
-    ">
-        <li>⚙️ Python & Flask</li>
-        <li>🎧 Speech Processing</li>
-        <li>🤖 Deep Learning (Transformer)</li>
-        <li>🌐 Web Interface</li>
+    <ul class="tech-list">
+      <li>⚙️ Python & Flask</li>
+      <li>🎧 Speech Processing</li>
+      <li>🤖 Deep Learning (Transformer)</li>
+      <li>🌐 Web Interface</li>
     </ul>
 
+  </div>
 </div>
+
+<style>
+
+.gradient-title{
+font-family:'Syne',sans-serif;
+font-size:2.4rem;
+font-weight:800;
+background:linear-gradient(135deg,var(--accent),var(--accent2));
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+margin-bottom:1rem;
+}
+
+.about-content p{
+color:#cfd6e6;
+line-height:1.9;
+margin-bottom:1.1rem;
+font-size:0.95rem;
+}
+
+.section-title{
+font-family:'Syne',sans-serif;
+font-size:1.6rem;
+margin-bottom:0.8rem;
+}
+
+.tech-title{
+font-family:'Syne',sans-serif;
+margin-top:1.5rem;
+margin-bottom:0.6rem;
+font-size:1.2rem;
+}
+
+.tech-list{
+list-style:none;
+padding:0;
+display:flex;
+flex-direction:column;
+gap:0.4rem;
+font-size:0.85rem;
+color:var(--text);
+}
+
+</style>
+
 {% endblock %}
